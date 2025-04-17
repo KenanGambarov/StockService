@@ -1,0 +1,26 @@
+resilience4j:
+  retry:
+    instances:
+      redisRetry:
+        max-attempts: 3
+        wait-duration: 2s
+        retry-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+        ignore-exceptions:
+          - com.stockservice.exception.NotFoundException
+logging:
+  config: classpath:logback-spring.xml
+spring:
+  elasticsearch:
+    uris: http://elasticsearch:9200
+    username: elastic
+    password: sSM*iZr*b0SOvxjC_QqP
+redis:
+  server:
+    urls: redis://redis:6379
+client:
+  product-service:
+    url: http://ms.product:8080
+server:
+  port: 8082

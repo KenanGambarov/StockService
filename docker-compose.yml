@@ -1,0 +1,72 @@
+version: '3.1'
+services:
+  stock-service:
+    image: stockservices:1.0
+    hostname: ms.stock
+    depends_on:
+      - stock_db
+      - redis
+    ports:
+      - "8082:8082"
+#    First we need create network for feign client
+#    docker network create ms-services
+    networks:
+      - ms-services
+    volumes:
+      - ./logs/cart-service:/opt/app/logs/stock-service
+    environment:
+      DB_CONNECTION_IP: stock_db
+      DB_CONNECTION_PORT: 5432
+      DB_NAME: stock_service
+      DB_CONNECTION_USERNAME: admin
+      DB_CONNECTION_PASSWORD: 123456
+  stock_db:
+    hostname: postgresql
+    image: postgres:15
+    networks:
+      - ms-services
+    restart: always
+    volumes:
+      - stock_db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: stock_service
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 123456
+    ports:
+      - "5434:5434"
+#  adminer:
+#    image: adminer
+#    networks:
+#      - ms-services
+#    restart: always
+#    ports:
+#      - "8581:8080"
+  redis:
+    image: redis:latest
+    container_name: redis_stock
+    volumes:
+      - redis_data:/data
+    networks:
+      - ms-services
+    ports:
+      - "6381:6381"
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.11.1
+    user: root
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - ./logs/cart-service:/opt/app/logs/stock-service
+#    depends_on:
+#      - elasticsearch
+    networks:
+      - ms-services
+networks:
+  ms-services:
+    external: true
+    driver: bridge
+volumes:
+  stock_db_data:
+    driver: local
+  redis_data:
+    driver: local
+  elasticsearch_data:
