@@ -13,7 +13,7 @@ services:
     networks:
       - ms-services
     volumes:
-      - ./logs/cart-service:/opt/app/logs/stock-service
+      - ./logs/stock-service:/opt/app/logs/stock-service
     environment:
       DB_CONNECTION_IP: stock_db
       DB_CONNECTION_PORT: 5432
@@ -55,7 +55,7 @@ services:
     user: root
     volumes:
       - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
-      - ./logs/cart-service:/opt/app/logs/stock-service
+      - ./logs/stock-service:/opt/app/logs/stock-service
 #    depends_on:
 #      - elasticsearch
     networks:
