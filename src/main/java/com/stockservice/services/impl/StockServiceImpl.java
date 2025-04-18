@@ -8,9 +8,9 @@ import com.stockservice.dto.request.StockRequestDto;
 import com.stockservice.dto.response.StockResponseDto;
 import com.stockservice.entity.StockEntity;
 import com.stockservice.entity.StockLogEntity;
-import com.stockservice.exception.NotFoundException;
 import com.stockservice.exception.OutOfStockException;
 import com.stockservice.mapper.StockMapper;
+import com.stockservice.queue.QueueSender;
 import com.stockservice.repository.StockLogRepository;
 import com.stockservice.repository.StockRepository;
 import com.stockservice.services.StockCacheService;
@@ -20,6 +20,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import static com.stockservice.dto.enums.RabbitQueueType.QUEUE_NAME;
 import static com.stockservice.exception.ExceptionConstants.PRODUCT_OUT_OF_STOCK;
 
 @Slf4j
@@ -31,6 +32,8 @@ public class StockServiceImpl implements StockService {
     private final StockLogRepository stockLogRepository;
     private final StockCacheService stockCacheService;
     private final ProductServiceClient productServiceClient;
+    private final QueueSender queueSender;
+
 
 
     @Override
@@ -44,6 +47,7 @@ public class StockServiceImpl implements StockService {
         logStockChange(StockChangeType.INCREASE.name().toLowerCase(),stock,stock.getQuantity());
 
         saveStockLog(stock,StockChangeType.INCREASE,stock.getQuantity(),StockChangeTypeDescription.PRODUCT_ADDED.getDescription());
+        queueSender.sendStockUpdate(QUEUE_NAME.getQueueName(),StockMapper.getRequestDto(stock));
         stockCacheService.clearStockCache(stock.getProductId());
     }
 
@@ -61,6 +65,7 @@ public class StockServiceImpl implements StockService {
         logStockChange(StockChangeType.DECREASE.name().toLowerCase(),stock,stock.getQuantity());
 
         saveStockLog(stock,StockChangeType.DECREASE,stock.getQuantity(),StockChangeTypeDescription.PRODUCT_SOLD.getDescription());
+        queueSender.sendStockUpdate(QUEUE_NAME.getQueueName(),StockMapper.getRequestDto(stock));
         stockCacheService.clearStockCache(productId);
     }
 
@@ -68,7 +73,7 @@ public class StockServiceImpl implements StockService {
     public StockResponseDto getProductsFromStock(Long productId) {
         ProductDto product = getProduct(productId);
         StockEntity stock = stockCacheService.getStockFromCacheOrDB(productId);
-        return StockMapper.getStockDto(stock,product);
+        return StockMapper.getResponseStockDto(stock,product);
     }
 
     private ProductDto getProduct(Long productId){

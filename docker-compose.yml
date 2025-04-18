@@ -6,6 +6,7 @@ services:
     depends_on:
       - stock_db
       - redis
+      - rabbitmq
     ports:
       - "8082:8082"
 #    First we need create network for feign client
@@ -60,6 +61,18 @@ services:
 #      - elasticsearch
     networks:
       - ms-services
+  rabbitmq:
+    image: rabbitmq:3.12-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - ms-services
 networks:
   ms-services:
     external: true
@@ -68,5 +81,7 @@ volumes:
   stock_db_data:
     driver: local
   redis_data:
+    driver: local
+  rabbitmq:
     driver: local
   elasticsearch_data:

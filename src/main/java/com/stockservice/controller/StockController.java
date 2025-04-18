@@ -16,17 +16,17 @@ public class StockController {
 
     private StockService stockService;
 
-    @PostMapping("/add")
+    @PostMapping()
     @ResponseStatus(HttpStatus.CREATED)
     public void addProductToCart(@Validated @RequestBody StockRequestDto requestDto){
         stockService.addProductToStock(requestDto);
     }
 
-//    @DeleteMapping("/{productId}/delete")
-//    @ResponseStatus(HttpStatus.NO_CONTENT)
-//    public void deleteProduct(@PathVariable Long productId, int amount){
-//        stockService.deleteProductFromStock(productId, amount);
-//    }
+    @DeleteMapping("/{productId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteProduct(@PathVariable Long productId, int amount){
+        stockService.deleteProductFromStock(productId, amount);
+    }
 
     @GetMapping("/products/{productId}")
     @ResponseStatus(HttpStatus.OK)
