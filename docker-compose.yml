@@ -65,6 +65,8 @@ services:
     image: rabbitmq:3.12-management
     container_name: rabbitmq
     hostname: rabbitmq
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
     ports:
       - "5672:5672"
       - "15672:15672"
