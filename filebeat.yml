@@ -1,5 +1,5 @@
 filebeat.inputs:
-  - type: log
+  - type: filestream
     enabled: true
     paths:
       - /opt/app/logs/stock-service/*.json
@@ -8,9 +8,9 @@ filebeat.inputs:
     json.ignore_decoding_error: true
     fields_under_root: true
     fields:
-      service.name: stock-service
+      service.name: stock-service 
 
 output.elasticsearch:
-  hosts: ["http://elasticsearch:9200"]
+  hosts: ["http://elasticsearch_log:9200"]
   username: "elastic"    # Elasticsearch istifadəçi adı
   password: "sSM*iZr*b0SOvxjC_QqP"  #

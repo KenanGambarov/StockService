@@ -8,6 +8,7 @@ import com.stockservice.dto.request.StockRequestDto;
 import com.stockservice.dto.response.StockResponseDto;
 import com.stockservice.entity.StockEntity;
 import com.stockservice.entity.StockLogEntity;
+import com.stockservice.exception.ExceptionConstants;
 import com.stockservice.exception.OutOfStockException;
 import com.stockservice.mapper.StockMapper;
 import com.stockservice.queue.QueueSender;
@@ -41,7 +42,7 @@ public class StockServiceImpl implements StockService {
     public void addProductToStock(StockRequestDto stockDto) {
         getProduct(stockDto.getProductId());
 
-        StockEntity stock = stockCacheService.getStockFromCacheOrDB(stockDto.getProductId());
+        StockEntity stock = stockCacheService.getStockFromCacheOrDB(stockDto.getProductId()).orElseThrow(()-> new OutOfStockException(ExceptionConstants.PRODUCT_OUT_OF_STOCK.getMessage()));
         stock.setQuantity(stock.getQuantity() + stockDto.getQuantity());
         stock = stockRepository.save(stock);
         logStockChange(StockChangeType.INCREASE.name().toLowerCase(),stock,stock.getQuantity());
@@ -54,7 +55,7 @@ public class StockServiceImpl implements StockService {
     @Override
     @Transactional
     public void deleteProductFromStock(Long productId, int amount) {
-        StockEntity stock = stockCacheService.getStockFromCacheOrDB(productId);
+        StockEntity stock = stockCacheService.getStockFromCacheOrDB(productId).orElseThrow(()-> new OutOfStockException(ExceptionConstants.PRODUCT_OUT_OF_STOCK.getMessage()));
 
         if (stock.getQuantity() < amount) {
             throw new OutOfStockException(PRODUCT_OUT_OF_STOCK.getMessage());
@@ -72,7 +73,7 @@ public class StockServiceImpl implements StockService {
     @Override
     public StockResponseDto getProductsFromStock(Long productId) {
         ProductDto product = getProduct(productId);
-        StockEntity stock = stockCacheService.getStockFromCacheOrDB(productId);
+        StockEntity stock = stockCacheService.getStockFromCacheOrDB(productId).orElseThrow(()-> new OutOfStockException(ExceptionConstants.PRODUCT_OUT_OF_STOCK.getMessage()));
         return StockMapper.getResponseStockDto(stock,product);
     }
 

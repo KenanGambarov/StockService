@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -29,15 +30,16 @@ public class StockCacheServiceImpl implements StockCacheService {
     @Override
     @CircuitBreaker(name = "redisBreaker", fallbackMethod = "fallbackStockCache")
     @Retry(name = "redisRetry", fallbackMethod = "fallbackStockCache")
-    public StockEntity getStockFromCacheOrDB(Long productId) {
-        return cacheUtil.getOrLoad(StockCacheConstraints.PRODUCT_KEY.getKey(productId),
+    public Optional<StockEntity> getStockFromCacheOrDB(Long productId) {
+        StockEntity stock = cacheUtil.getOrLoad(StockCacheConstraints.PRODUCT_KEY.getKey(productId),
                 () -> stockRepository.findByProductId(productId).orElse(StockMapper.createEntity(productId)),
                 StockCacheDurationConstraints.DAY.toDuration());
+        return Optional.ofNullable(stock);
     }
 
-    public StockEntity fallbackStockCache(Long productId, Throwable t) {
+    public Optional fallbackStockCache(Long productId, Throwable t) {
         log.error("Redis not available for product {}, falling back to DB. Error: {}",productId, t.getMessage());
-        return  stockRepository.findByProductId(productId).orElseThrow(()-> new OutOfStockException(ExceptionConstants.PRODUCT_OUT_OF_STOCK.getMessage()));
+        return  Optional.empty();
     }
 
 
