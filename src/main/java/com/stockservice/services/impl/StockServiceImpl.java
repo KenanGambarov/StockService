@@ -7,7 +7,6 @@ import com.stockservice.dto.product.ProductDto;
 import com.stockservice.dto.request.StockRequestDto;
 import com.stockservice.dto.response.StockResponseDto;
 import com.stockservice.entity.StockEntity;
-import com.stockservice.entity.StockLogEntity;
 import com.stockservice.exception.ExceptionConstants;
 import com.stockservice.exception.OutOfStockException;
 import com.stockservice.mapper.StockMapper;
@@ -42,7 +41,7 @@ public class StockServiceImpl implements StockService {
     public void addProductToStock(StockRequestDto stockDto) {
         getProduct(stockDto.getProductId());
 
-        StockEntity stock = stockCacheService.getStockFromCacheOrDB(stockDto.getProductId()).orElseThrow(()-> new OutOfStockException(ExceptionConstants.PRODUCT_OUT_OF_STOCK.getMessage()));
+        StockEntity stock = findStockOrThrow(stockDto.getProductId());
         stock.setQuantity(stock.getQuantity() + stockDto.getQuantity());
         stock = stockRepository.save(stock);
         logStockChange(StockChangeType.INCREASE.name().toLowerCase(),stock,stock.getQuantity());
@@ -55,7 +54,7 @@ public class StockServiceImpl implements StockService {
     @Override
     @Transactional
     public void deleteProductFromStock(Long productId, int amount) {
-        StockEntity stock = stockCacheService.getStockFromCacheOrDB(productId).orElseThrow(()-> new OutOfStockException(ExceptionConstants.PRODUCT_OUT_OF_STOCK.getMessage()));
+        StockEntity stock = findStockOrThrow(productId);
 
         if (stock.getQuantity() < amount) {
             throw new OutOfStockException(PRODUCT_OUT_OF_STOCK.getMessage());
@@ -73,7 +72,7 @@ public class StockServiceImpl implements StockService {
     @Override
     public StockResponseDto getProductsFromStock(Long productId) {
         ProductDto product = getProduct(productId);
-        StockEntity stock = stockCacheService.getStockFromCacheOrDB(productId).orElseThrow(()-> new OutOfStockException(ExceptionConstants.PRODUCT_OUT_OF_STOCK.getMessage()));
+        StockEntity stock = findStockOrThrow(productId);
         return StockMapper.getResponseStockDto(stock,product);
     }
 
@@ -81,6 +80,11 @@ public class StockServiceImpl implements StockService {
         ProductDto product = productServiceClient.getProductById(productId);
         log.info("Feign client product {} ", product);
         return product;
+    }
+
+    private StockEntity findStockOrThrow(Long productId) {
+        return stockCacheService.getStockFromCacheOrDB(productId)
+                .orElseThrow(()-> new OutOfStockException(ExceptionConstants.PRODUCT_OUT_OF_STOCK.getMessage()));
     }
 
     private void logStockChange(String action, StockEntity stock, int amount) {
@@ -91,12 +95,7 @@ public class StockServiceImpl implements StockService {
     private void saveStockLog(StockEntity stock, StockChangeType changeType,
                               int amount, String description) {
         stockLogRepository.save(
-                StockLogEntity.builder()
-                        .stock(stock)
-                        .changeType(changeType)
-                        .amount(amount)
-                        .description(description)
-                        .build()
+                StockMapper.createEntity(stock, changeType, amount, description)
         );
         log.info("StockLog saved. productId: {}, changeType: {}, amount: {}",
                 stock.getProductId(), changeType, amount);

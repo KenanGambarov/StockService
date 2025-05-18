@@ -1,9 +1,11 @@
 package com.stockservice.mapper;
 
+import com.stockservice.dto.enums.StockChangeType;
 import com.stockservice.dto.product.ProductDto;
 import com.stockservice.dto.request.StockRequestDto;
 import com.stockservice.dto.response.StockResponseDto;
 import com.stockservice.entity.StockEntity;
+import com.stockservice.entity.StockLogEntity;
 
 public class StockMapper {
 
@@ -29,4 +31,15 @@ public class StockMapper {
                 .productId(productId)
                 .build();
     }
+
+    public static StockLogEntity createEntity(StockEntity stock, StockChangeType changeType,
+                                              int amount, String description){
+        return StockLogEntity.builder()
+                .stock(stock)
+                .changeType(changeType)
+                .amount(amount)
+                .description(description)
+                .build();
+    }
+
 }

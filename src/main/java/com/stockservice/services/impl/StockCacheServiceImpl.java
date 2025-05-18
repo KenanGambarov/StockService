@@ -37,7 +37,7 @@ public class StockCacheServiceImpl implements StockCacheService {
         return Optional.ofNullable(stock);
     }
 
-    public Optional fallbackStockCache(Long productId, Throwable t) {
+    public Optional<StockEntity> fallbackStockCache(Long productId, Throwable t) {
         log.error("Redis not available for product {}, falling back to DB. Error: {}",productId, t.getMessage());
         return  Optional.empty();
     }
